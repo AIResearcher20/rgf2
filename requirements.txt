@@ -1,0 +1,9 @@
+torch --index-url https://download.pytorch.org/whl/cpu
+torch-geometric
+numpy
+scipy
+scikit-learn
+pandas
+matplotlib
+pyyaml
+pytest
