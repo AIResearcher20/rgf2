@@ -1,12 +1,21 @@
 import sys
 sys.path.insert(0, "src")
 
+import json
 from rgf.data import load_dataset
 from rgf.model import RGF
+from rgf.baselines import GCN
 from rgf.train import train
 from rgf.eval import evaluate
 from rgf.repro import seed_everything, snapshot
-import json
+
+
+def run(model, data, name, seed):
+    model, history = train(model, data, epochs=200, seed=seed)
+    result = evaluate(model, data)
+    print(f"=== {name} ===")
+    print(json.dumps(result, indent=2))
+    return result
 
 
 def main():
@@ -15,18 +24,24 @@ def main():
 
     dataset, data = load_dataset("Cora")
 
-    model = RGF(
-        in_dim=dataset.num_features,
-        hidden=64,
-        out_dim=dataset.num_classes,
-        num_layers=2,
-        dropout=0.5,
-    )
+    common = {
+        "in_dim": dataset.num_features,
+        "hidden": 64,
+        "out_dim": dataset.num_classes,
+        "num_layers": 2,
+        "dropout": 0.5,
+    }
 
-    model, history = train(model, data, epochs=200, seed=seed)
-    result = evaluate(model, data)
+    rgf = RGF(**common)
+    gcn = GCN(**common)
 
-    print(json.dumps(result, indent=2))
+    rgf_result = run(rgf, data, "RGF2", seed)
+    gcn_result = run(gcn, data, "GCN", seed)
+
+    print()
+    print("=== SUMMARY ===")
+    print(f"RGF2 test acc: {rgf_result['test']['acc']:.4f}")
+    print(f"GCN  test acc: {gcn_result['test']['acc']:.4f}")
 
     snap = snapshot({
         "dataset": "Cora",
